@@ -4,7 +4,10 @@ import { CreateTransactionUseCase, CreateTransactionRequest } from '../applicati
 import { GetTransactionsUseCase, GetTransactionsRequest } from '../application/get-transactions.use-case';
 import { UpdateTransactionUseCase, UpdateTransactionRequest } from '../application/update-transaction.use-case';
 import { DeleteTransactionUseCase, DeleteTransactionRequest } from '../application/delete-transaction.use-case';
-import { Transaction } from '../domain/transaction.repository';
+import { GetFinancialSummaryUseCase, GetFinancialSummaryRequest } from '../application/get-financial-summary.use-case';
+import { GetTransactionsByCategoryUseCase, GetTransactionsByCategoryRequest } from '../application/get-transactions-by-category.use-case';
+import { GetMonthlyTrendUseCase, GetMonthlyTrendRequest } from '../application/get-monthly-trend.use-case';
+import { Transaction, FinancialSummary, CategorySummary, MonthlyTrend } from '../domain/transaction.repository';
 import { PaginatedResult } from '../../../shared/domain/pagination.interface';
 import { JwtAuthGuard } from '../../../shared/infrastructure/jwt-auth.guard';
 import { CurrentUser, CurrentUser as CurrentUserType } from '../../../shared/infrastructure/current-user.decorator';
@@ -26,6 +29,9 @@ export class TransactionsController {
     private readonly getTransactionsUseCase: GetTransactionsUseCase,
     private readonly updateTransactionUseCase: UpdateTransactionUseCase,
     private readonly deleteTransactionUseCase: DeleteTransactionUseCase,
+    private readonly getFinancialSummaryUseCase: GetFinancialSummaryUseCase,
+    private readonly getTransactionsByCategoryUseCase: GetTransactionsByCategoryUseCase,
+    private readonly getMonthlyTrendUseCase: GetMonthlyTrendUseCase,
   ) { }
 
   @Post()
@@ -87,6 +93,106 @@ export class TransactionsController {
     };
 
     return this.getTransactionsUseCase.execute(request);
+  }
+
+  @Get('summary')
+  @ApiOperation({ summary: 'Obtener resumen financiero del mes' })
+  @ApiQuery({ name: 'month', required: true, description: 'Mes en formato YYYY-MM', example: '2024-01' })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumen financiero del mes',
+    schema: {
+      type: 'object',
+      properties: {
+        totalIncome: { type: 'number' },
+        totalExpenses: { type: 'number' },
+        balance: { type: 'number' },
+        savingsRate: { type: 'number' },
+        currency: { type: 'string', enum: ['ARS', 'USD'] },
+      },
+    }
+  })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  async getFinancialSummary(
+    @Query('month') month: string,
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<FinancialSummary> {
+    const request: GetFinancialSummaryRequest = {
+      userId: user.userId,
+      month,
+    };
+
+    return this.getFinancialSummaryUseCase.execute(request);
+  }
+
+  @Get('by-category')
+  @ApiOperation({ summary: 'Obtener transacciones agrupadas por categoría' })
+  @ApiQuery({ name: 'month', required: true, description: 'Mes en formato YYYY-MM', example: '2024-01' })
+  @ApiResponse({
+    status: 200,
+    description: 'Transacciones agrupadas por categoría',
+    isArray: true,
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          categoryId: { type: 'string' },
+          categoryName: { type: 'string' },
+          categoryColor: { type: 'string' },
+          categoryIcon: { type: 'string' },
+          totalAmount: { type: 'number' },
+          transactionCount: { type: 'number' },
+          type: { type: 'string', enum: ['income', 'expense'] },
+        },
+      },
+    }
+  })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  async getTransactionsByCategory(
+    @Query('month') month: string,
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<CategorySummary[]> {
+    const request: GetTransactionsByCategoryRequest = {
+      userId: user.userId,
+      month,
+    };
+
+    return this.getTransactionsByCategoryUseCase.execute(request);
+  }
+
+  @Get('monthly-trend')
+  @ApiOperation({ summary: 'Obtener tendencia mensual del año' })
+  @ApiQuery({ name: 'year', required: true, description: 'Año en formato YYYY', example: '2024' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tendencia mensual del año',
+    isArray: true,
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          month: { type: 'string' },
+          income: { type: 'number' },
+          expenses: { type: 'number' },
+          savings: { type: 'number' },
+          currency: { type: 'string', enum: ['ARS', 'USD'] },
+        },
+      },
+    }
+  })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  async getMonthlyTrend(
+    @Query('year') year: string,
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<MonthlyTrend[]> {
+    const request: GetMonthlyTrendRequest = {
+      userId: user.userId,
+      year,
+    };
+
+    return this.getMonthlyTrendUseCase.execute(request);
   }
 
   @Get(':id')

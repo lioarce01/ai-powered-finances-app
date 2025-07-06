@@ -9,6 +9,9 @@ export interface IBudgetRepository {
   create(data: CreateBudgetDto & { userId: string }): Promise<Budget>;
   update(id: string, data: UpdateBudgetDto): Promise<Budget>;
   delete(id: string): Promise<void>;
+
+  // Budget progress methods
+  getBudgetProgress(userId: string, month: string): Promise<BudgetProgress[]>;
 }
 
 export interface Budget {
@@ -18,4 +21,17 @@ export interface Budget {
   month: string;
   currency: 'ARS' | 'USD';
   userId: string;
+}
+
+export interface BudgetProgress {
+  budgetId: string;
+  categoryId: string;
+  categoryName: string;
+  categoryColor: string;
+  categoryIcon?: string;
+  limit: number;
+  spent: number;
+  percentage: number;
+  currency: 'ARS' | 'USD';
+  trend: 'up' | 'down' | 'stable';
 } 

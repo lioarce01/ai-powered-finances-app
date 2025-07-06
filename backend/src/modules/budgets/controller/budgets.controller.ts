@@ -4,7 +4,8 @@ import { CreateBudgetUseCase, CreateBudgetRequest } from '../application/create-
 import { GetBudgetsUseCase, GetBudgetsRequest } from '../application/get-budgets.use-case';
 import { UpdateBudgetUseCase, UpdateBudgetRequest } from '../application/update-budget.use-case';
 import { DeleteBudgetUseCase, DeleteBudgetRequest } from '../application/delete-budget.use-case';
-import { Budget } from '../domain/budget.repository';
+import { GetBudgetProgressUseCase, GetBudgetProgressRequest } from '../application/get-budget-progress.use-case';
+import { Budget, BudgetProgress } from '../domain/budget.repository';
 import { PaginatedResult } from '../../../shared/domain/pagination.interface';
 import { JwtAuthGuard } from '../../../shared/infrastructure/jwt-auth.guard';
 import { CurrentUser, CurrentUser as CurrentUserType } from '../../../shared/infrastructure/current-user.decorator';
@@ -25,6 +26,7 @@ export class BudgetsController {
     private readonly getBudgetsUseCase: GetBudgetsUseCase,
     private readonly updateBudgetUseCase: UpdateBudgetUseCase,
     private readonly deleteBudgetUseCase: DeleteBudgetUseCase,
+    private readonly getBudgetProgressUseCase: GetBudgetProgressUseCase,
   ) { }
 
   @Post()
@@ -120,5 +122,43 @@ export class BudgetsController {
   async remove(@Param('id') id: string): Promise<void> {
     const request: DeleteBudgetRequest = { id };
     return this.deleteBudgetUseCase.execute(request);
+  }
+
+  @Get('progress')
+  @ApiOperation({ summary: 'Obtener progreso de presupuestos del mes' })
+  @ApiQuery({ name: 'month', required: true, description: 'Mes en formato YYYY-MM', example: '2024-01' })
+  @ApiResponse({
+    status: 200,
+    description: 'Progreso de presupuestos del mes',
+    isArray: true,
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          budgetId: { type: 'string' },
+          categoryId: { type: 'string' },
+          categoryName: { type: 'string' },
+          categoryColor: { type: 'string' },
+          categoryIcon: { type: 'string' },
+          limit: { type: 'number' },
+          spent: { type: 'number' },
+          percentage: { type: 'number' },
+          currency: { type: 'string', enum: ['ARS', 'USD'] },
+          trend: { type: 'string', enum: ['up', 'down', 'stable'] },
+        },
+      },
+    }
+  })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  async getBudgetProgress(
+    @Query('month') month: string,
+    @CurrentUser() user: CurrentUserType,
+  ): Promise<BudgetProgress[]> {
+    const request: GetBudgetProgressRequest = {
+      userId: user.userId,
+      month,
+    };
+    return this.getBudgetProgressUseCase.execute(request);
   }
 } 
