@@ -414,6 +414,3 @@ Para contribuir al desarrollo:
 - **PRs**: Template con checklist
 
 ---
-
-**Última actualización**: Enero 2024
-**Próxima revisión**: Semanal 

@@ -253,5 +253,3 @@ Si tienes problemas con la autenticación:
 4. Abre un issue en el repositorio con detalles del problema
 
 ---
-
-**Última actualización**: Enero 2024 
