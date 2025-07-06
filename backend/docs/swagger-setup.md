@@ -330,5 +330,3 @@ const transactions = await api.getTransactions();
 - [Decoradores de Swagger](https://docs.nestjs.com/openapi/decorators)
 
 ---
-
-**Última actualización**: Enero 2024 
